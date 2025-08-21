@@ -28,14 +28,14 @@ void loop()
   if (packetSize) 
   {
     
-    Serial.print("Received packet '");
+    Serial.println("Received packet '");
  
     while (LoRa.available())              // read packet
     {
       String LoRaData = LoRa.readString();
-      Serial.print(LoRaData); 
+      Serial.println(LoRaData); 
     }
-    Serial.print("' with RSSI ");         // print RSSI of packet
+    Serial.println("' with RSSI ");         // print RSSI of packet
     Serial.println(LoRa.packetRssi());
   }
 }
