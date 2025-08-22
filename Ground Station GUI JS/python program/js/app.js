@@ -140,8 +140,45 @@ function rotateVec(vec, R){
   ];
 }
 
-// Parse lines like: Data: A-450; T-27.5; X-5; YX-10; YY-5; YZ-2
+
+// Parse lines like: CAN-TI-462; A-488.00; T-32.90; P-101.00; X-92; Y--20; Z-103; YX-8; YY-8; YZ-4;
 function parseSerialLine(s) {
+  const out = {alt:0,temp:0,pres:0,acc_x:0,acc_y:0,acc_z:0,yaw_x:0,yaw_y:0,yaw_z:0};
+  s = (s||"").trim();
+  if (!s) return out;
+
+  // Remove CAN-TI prefix if present
+  if (s.startsWith("CAN-TI")) {
+    const firstSemi = s.indexOf(";");
+    if (firstSemi >= 0) s = s.slice(firstSemi+1).trim();
+  }
+  if (s.startsWith("Data:")) {
+    s = s.slice(5).trim();
+  }
+
+  const parts = s.split(";").map(p=>p.trim()).filter(Boolean);
+  for (const p of parts){
+    if (!p.includes("-")) continue;
+    const [key, val] = p.split("-", 2);
+    const f = parseFloat(val);
+    if (Number.isNaN(f)) continue;
+    if (key==="A") out.alt = f;
+    else if (key==="T") out.temp = f;
+    else if (key==="P") out.pres = f;
+    else if (key==="X") out.acc_x = f;
+    else if (key==="Y") out.acc_y = f;
+    else if (key==="Z") out.acc_z = f;
+    else if (key==="YX") out.yaw_x = f;
+    else if (key==="YY") out.yaw_y = f;
+    else if (key==="YZ") out.yaw_z = f;
+  }
+  return out;
+}
+
+
+
+// Parse lines like: Data: A-450; T-27.5; X-5; YX-10; YY-5; YZ-2
+function parseSerialLinedata(s) {
   const out = {alt:0,temp:0,pres:0,acc_x:0,acc_y:0,acc_z:0,yaw_x:0,yaw_y:0,yaw_z:0};
   s = (s||"").trim();
   if (!s.includes("Data")) return out;
