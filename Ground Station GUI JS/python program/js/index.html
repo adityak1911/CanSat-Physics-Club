@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>CanSat Live 3D (HTML/JS)</title>
+  <link rel="stylesheet" href="style.css" />
+  <!-- Plotly.js (full) -->
+  <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+</head>
+<body>
+  <div class="app">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <h1 class="sidebar__title">CanSat Link</h1>
+
+      <div class="field">
+        <label class="label">Serial Port</label>
+        <div class="port-row">
+          <button id="btn-choose-port" class="btn">Choose Port</button>
+          <span id="port-name" class="muted">(no port selected)</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="label">Baud Rate</label>
+        <select id="baud" class="select">
+          <option>9600</option>
+          <option>19200</option>
+          <option>57600</option>
+          <option selected>115200</option>
+          <option>230400</option>
+          <option>460800</option>
+        </select>
+      </div>
+
+      <div class="row">
+        <button id="btn-connect" class="btn primary" disabled>Connect</button>
+        <button id="btn-disconnect" class="btn" disabled>Disconnect</button>
+      </div>
+
+      <hr class="divider" />
+
+      <h2 class="subheading">Refresh</h2>
+      <div class="toggle-row">
+        <input type="checkbox" id="auto-refresh" checked />
+        <label for="auto-refresh">Auto-refresh</label>
+      </div>
+
+      <div class="slider-field">
+        <label for="refresh-hz" class="label">Refresh rate (Hz): <span id="hz-label">10</span></label>
+        <input type="range" min="1" max="30" step="1" id="refresh-hz" value="10" />
+      </div>
+
+      <p class="hint">
+        Tip: If your browser doesn’t support Web Serial or you don’t connect a port,
+        the dashboard will run in simulator mode.
+      </p>
+    </aside>
+
+    <!-- Main content -->
+    <main class="main">
+      <section class="section">
+        <h2 class="section__title">Live Graphs</h2>
+        <div class="grid grid-3">
+          <div class="card"><div id="alt-chart"></div></div>
+          <div class="card"><div id="temp-chart"></div></div>
+          <div class="card"><div id="pres-chart"></div></div>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2 class="section__title">Attitude Visualizer</h2>
+        <div class="card">
+          <div id="attitude-plot" class="attitude"></div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Right column -->
+    <aside class="rightbar">
+      <section class="section">
+        <h2 class="section__title">Telemetry</h2>
+        <div class="metrics">
+          <div class="metric"><div class="metric__label">Altitude (m)</div><div id="m-alt" class="metric__value">0.00</div></div>
+          <div class="metric"><div class="metric__label">Temperature (°C)</div><div id="m-temp" class="metric__value">0.00</div></div>
+          <div class="metric"><div class="metric__label">Pressure (hPa)</div><div id="m-pres" class="metric__value">0.00</div></div>
+          <div class="metric"><div class="metric__label">Accel X</div><div id="m-ax" class="metric__value">0.00</div></div>
+          <div class="metric"><div class="metric__label">Accel Y</div><div id="m-ay" class="metric__value">0.00</div></div>
+          <div class="metric"><div class="metric__label">Accel Z</div><div id="m-az" class="metric__value">0.00</div></div>
+          <div class="metric"><div class="metric__label">Yaw X (°/s)</div><div id="m-yx" class="metric__value">0.00</div></div>
+          <div class="metric"><div class="metric__label">Yaw Y (°/s)</div><div id="m-yy" class="metric__value">0.00</div></div>
+          <div class="metric"><div class="metric__label">Yaw Z (°/s)</div><div id="m-yz" class="metric__value">0.00</div></div>
+          <div class="metric"><div class="metric__label">Last update (s ago)</div><div id="m-lag" class="metric__value">0.0</div></div>
+        </div>
+      </section>
+    </aside>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
