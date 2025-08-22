@@ -1,75 +1,42 @@
 #include <Wire.h>
 #include <Adafruit_MPL3115A2.h>
 
-// Power by connecting Vin to 3-5V, GND to GND
-// Uses I2C - connect SCL to the SCL pin, SDA to SDA pin
-// See the Wire tutorial for pinouts for each Arduino
-// http://arduino.cc/en/reference/wire
 Adafruit_MPL3115A2 baro = Adafruit_MPL3115A2();
-double current_pressure = 100300;
-// Number of samples to average
-const int N = 5;
-// previous altitude
-int prev_alt = 0.0;
-// resolution
-float res = 0.44;
+
+// Set your local sea-level pressure in Pascals
+// You can get this once from any weather app or site
+#define SEA_LEVEL_PRESSURE 1008.10  // Example: 1006.50 hPa = 100650 Pa
 
 void setup() {
-  Serial.begin(9600);
-  Serial.println("MPL3115A2...");
-
+  Serial.begin(115200);
   if (!baro.begin()) {
-    Serial.println("Couldnt find sensor");
-    while (1) {delay(10);}
+    Serial.println("Could not find a valid MPL3115A2 sensor!");
+    while (1);
   }
 
-  // Step 1: Set local sea-level pressure in Pascals
-  // Example: If your weather app shows 1013.25 hPa => 101325 Pa
-  baro.setMode(MPL3115A2_ALTIMETER);
-  baro.setSeaPressure(current_pressure);
+  // Tell sensor our sea-level pressure for accurate altitude readings
+  baro.setSeaPressure(SEA_LEVEL_PRESSURE);
 
-  Serial.println("Calibration done!");
+  Serial.println("MPL3115A2 Altimeter Calibration Complete");
 }
 
 void loop() {
-  // Read pressure (optional)
-  double pascals = baro.getPressure();
-  Serial.print(pascals / 3377.0f); 
-  Serial.println(" Inches (Hg)");
+  float pressure = baro.getPressure();
+  float altitude = baro.getAltitude();
+  float temperature = baro.getTemperature();
 
-  // Take N altitude samples and average them
-  float sum_alt = 0.0;
-  for (int i = 0; i < N; i++) {
-    sum_alt += baro.getAltitude();
-    delay(10);  // small delay between samples for stability
-  }
-  float avg_alt = sum_alt / N;
+  Serial.print("Pressure = ");
+  Serial.print(pressure, 2);
+  Serial.println(" hPa");
 
-  int alt = prev_alt;
+  Serial.print("Altitude = ");
+  Serial.print(altitude, 2);
+  Serial.println(" m");
 
-  if (prev_alt==0.0){
-    prev_alt = avg_alt;
-  }
+  Serial.print("Temperature = ");
+  Serial.print(temperature, 2);
+  Serial.println(" C");
 
-  if (avg_alt > prev_alt){
-    avg_alt-=res;
-  }
-  else if(avg_alt < prev_alt){
-    avg_alt+=res;
-  }
-
-  prev_alt = avg_alt;
-
-  // Print averaged altitude
-  Serial.print("ALT: ");
-  Serial.print(avg_alt, 2);   // two decimals are enough
-  Serial.println(" meters");
-
-  // Temperature (optional)
-  float tempC = baro.getTemperature();
-  Serial.print(tempC);
-  Serial.println("*C");
-
-  Serial.println("------------------------");
-  delay(50);  // main loop delay
+  Serial.println("-----------------");
+  delay(2000);
 }

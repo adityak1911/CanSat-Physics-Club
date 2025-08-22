@@ -1,0 +1,37 @@
+import math
+
+def get_pressure_and_sea_level_pressure(altitude_m, temperature_c=27.0):
+    """
+    Calculates current pressure at given altitude and equivalent sea-level pressure.
+    
+    Parameters:
+        altitude_m (float): Altitude in meters.
+        temperature_c (float): Current temperature in Celsius (default = 27°C).
+    
+    Returns:
+        tuple: (pressure_at_altitude_hPa, sea_level_pressure_hPa)
+    """
+    # Constants for ISA model
+    P0 = 1013.25      # Sea-level standard atmospheric pressure (hPa)
+    T0 = 288.15       # Standard temperature at sea level in Kelvin
+    g = 9.80665       # Gravity (m/s^2)
+    L = 0.0065        # Temperature lapse rate (K/m)
+    R = 287.05        # Specific gas constant for dry air (J/(kg·K))
+
+    # Convert temperature to Kelvin
+    temperature_k = temperature_c + 273.15
+
+    # Calculate current pressure at altitude using barometric formula
+    pressure_at_alt = P0 * (1 - (L * altitude_m) / T0) ** (g / (R * L))
+
+    # Adjust to estimate sea-level pressure from current altitude pressure
+    sea_level_pressure = pressure_at_alt * (1 - (L * altitude_m) / T0) ** (-g / (R * L))
+
+    return round(pressure_at_alt, 2), round(sea_level_pressure, 2)
+
+
+# Example usage
+altitude = 13  # Your current altitude in meters
+pressure, sea_level_pressure = get_pressure_and_sea_level_pressure(altitude)
+print(f"Pressure at {altitude}m: {pressure} hPa")
+print(f"Sea-level pressure: {sea_level_pressure} hPa")
