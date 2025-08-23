@@ -1,20 +1,10 @@
 #include <Wire.h>
-#include <SPI.h>
-#include <LoRa.h>
-#include <Adafruit_MPL3115A2.h>
 #include <Adafruit_MPU6050.h>
 #include <Adafruit_Sensor.h>
 
-#define SDA_PIN 21
-#define SCL_PIN 22
-
-// LoRa pins 
-#define ss 5
-#define rst 14
-#define dio0 2
-
-// Create MPL3115A2 object
-Adafruit_MPL3115A2 baro = Adafruit_MPL3115A2();
+// I2C pins for ESP32
+#define SDA_PIN 16
+#define SCL_PIN 17
 
 // MPU6050 object
 Adafruit_MPU6050 mpu;
@@ -181,27 +171,14 @@ bool checkStationary(float accelX, float accelY, float accelZ, float gyroX, floa
   return stationaryCount >= STATIONARY_SAMPLES;
 }
 
-// Set your local sea-level pressure in hPa
-#define SEA_LEVEL_PRESSURE 1008.10
-
 void setup() {
   Serial.begin(115200);
-  while (!Serial);
-
-  Wire.begin(SDA_PIN, SCL_PIN); // single I2C bus for both sensors
-
-  Serial.println("Initializing MPL3115A2...");
-  if (!baro.begin()) {
-    Serial.println("Could not find a valid MPL3115A2 sensor!");
-    while (1);
-  }
-
-  // Set sea-level pressure for accurate altitude readings
-  baro.setSeaPressure(SEA_LEVEL_PRESSURE);
-  Serial.println("MPL3115A2 Initialized!");
-
-  Serial.println("Initializing MPU6050...");
-
+  while (!Serial) delay(10);
+  
+  Serial.println("ESP32 MPU6050 3D Spatial Tracking with Drift Compensation");
+  
+  // Initialize I2C with custom pins
+  Wire.begin(SDA_PIN, SCL_PIN);
   
   // Initialize MPU6050
   if (!mpu.begin()) {
@@ -236,29 +213,13 @@ void setup() {
   pitch = initialPitch;
   
   previousTime = millis();
-
-  // === LoRa ===
-
-  Serial.println("Initializing LoRa...");
-  LoRa.setPins(ss, rst, dio0);
-
-  // Start LoRa at 433 MHz
-  while (!LoRa.begin(433E6)) {
-    Serial.print(".");
-    delay(500);
-  }
-
-  LoRa.setSyncWord(0xA5);
-  Serial.println("\nLoRa Initialization OK!");
+  
+  Serial.println("Calibration complete. Starting 3D tracking...");
+  Serial.println("Format: X(m), Y(m), Z(m), Roll(deg), Pitch(deg), Yaw(deg)");
+  delay(1000);
 }
 
 void loop() {
-  // === Read data from MPL3115A2 ===
-  float pressure = baro.getPressure();      // in hPa
-  float altitude = baro.getAltitude();      // in meters
-  float temperature = baro.getTemperature();// in °C
-
-  // === Data from MPU 6050 ===
   unsigned long currentTime = millis();
   dt = (currentTime - previousTime) / 1000.0; // Convert to seconds
   
@@ -358,32 +319,23 @@ void loop() {
   posX += velX * dt;
   posY += velY * dt;
   posZ += velZ * dt;
-
-  // === Prepare timestamp ===
-  unsigned long timestamp = millis();  // in ms since boot
-
-  // === Prepare message ===
-  String message = "CAN-TI-" + String(timestamp) +
-                   "; A-" + String(altitude, 2) +
-                   "; T-" + String(temperature, 2) +
-                   "; P-" + String(pressure / 100.0, 2) + // convert hPa to bar
-                   "; X-" + String(posX)+
-                   "; Y-" + String(posY)+
-                   "; Z-" + String(posZ)+
-                   "; YX-" + String(roll)+
-                   "; YY-" + String(pitch)+
-                   "; YZ-" + String(yaw);
-
-  // === Send data via LoRa ===
-  Serial.print("Sending message: ");
-  Serial.println(message);
-
-  LoRa.beginPacket();
-  LoRa.print(message);
-  LoRa.endPacket();
-
-  Serial.println("Message sent!");
-  Serial.println("-----------------------------");
-
-  delay(500); // send every 0.5 seconds
+  
+  // Print results
+  Serial.print("X: ");
+  Serial.print(posX, 4);
+  Serial.print(" m, Y: ");
+  Serial.print(posY, 4);
+  Serial.print(" m, Z: ");
+  Serial.print(posZ, 4);
+  Serial.print(" m | Roll: ");
+  Serial.print(roll, 2);
+  Serial.print("°, Pitch: ");
+  Serial.print(pitch, 2);
+  Serial.print("°, Yaw: ");
+  Serial.print(yaw, 2);
+  Serial.print("° | Stationary: ");
+  Serial.println(isStationary ? "Yes" : "No");
+  
+  // Control output rate
+  delay(50); // 50 Hz update rate
 }
