@@ -384,6 +384,4 @@ void loop() {
 
   Serial.println("Message sent!");
   Serial.println("-----------------------------");
-
-  delay(500); // send every 0.5 seconds
 }
