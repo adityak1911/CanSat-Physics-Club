@@ -263,19 +263,18 @@ void loop() {
   float pressure = pressurePa / 100.0;  // in hPa
 
   // Read absolute altitude from BMP180
-  float readingAltitude = bmp.readAltitude(SEA_LEVEL_PRESSURE); // in meters
+  // Read absolute altitude from BMP180
+float readingAltitude = bmp.readAltitude(SEA_LEVEL_PRESSURE); // in meters
 
-  // Initialize base altitude at startup
-  if (!initialAltitudeSet) {
-      initialAltitude = readingAltitude; // store actual altitude
-      initialAltitudeSet = true;
-  }
+// Initialize base altitude at startup
+if (!initialAltitudeSet) {
+    initialAltitude = readingAltitude; // store actual altitude as reference
+    initialAltitudeSet = true;
+}
 
-  // Offset relative to starting altitude
-  float offset = readingAltitude - initialAltitude;
+// Altitude relative to start (first reading = 0)
+float altitude = readingAltitude - initialAltitude;
 
-  // Altitude to transmit
-  float altitude = readingAltitude + offset;
 
 
   float temperature = bmp.readTemperature(); // in °C
