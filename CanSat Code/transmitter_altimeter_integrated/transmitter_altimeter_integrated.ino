@@ -1,7 +1,7 @@
 #include <Wire.h>
 #include <SPI.h>
 #include <LoRa.h>
-#include <Adafruit_MPL3115A2.h>
+#include <Adafruit_BMP085.h>
 #include <Adafruit_MPU6050.h>
 #include <Adafruit_Sensor.h>
 
@@ -13,8 +13,8 @@
 #define rst 14
 #define dio0 2
 
-// Create MPL3115A2 object
-Adafruit_MPL3115A2 baro = Adafruit_MPL3115A2();
+// Create BMP085 object for BMP180 sensor
+Adafruit_BMP085 bmp;
 
 // MPU6050 object
 Adafruit_MPU6050 mpu;
@@ -182,7 +182,7 @@ bool checkStationary(float accelX, float accelY, float accelZ, float gyroX, floa
 }
 
 // Set your local sea-level pressure in hPa
-#define SEA_LEVEL_PRESSURE 1008.10
+#define SEA_LEVEL_PRESSURE 100810.0
 
 void setup() {
   Serial.begin(115200);
@@ -190,15 +190,13 @@ void setup() {
 
   Wire.begin(SDA_PIN, SCL_PIN); // single I2C bus for both sensors
 
-  Serial.println("Initializing MPL3115A2...");
-  if (!baro.begin()) {
-    Serial.println("Could not find a valid MPL3115A2 sensor!");
+  Serial.println("Initializing BMP180...");
+  if (!bmp.begin()) {
+    Serial.println("Could not find a valid BMP180 sensor!");
     while (1);
   }
 
-  // Set sea-level pressure for accurate altitude readings
-  baro.setSeaPressure(SEA_LEVEL_PRESSURE);
-  Serial.println("MPL3115A2 Initialized!");
+  Serial.println("BMP180 Initialized!");
 
   Serial.println("Initializing MPU6050...");
 
@@ -253,10 +251,18 @@ void setup() {
 }
 
 void loop() {
-  // === Read data from MPL3115A2 ===
-  float pressure = baro.getPressure();      // in hPa
-  float altitude = baro.getAltitude();      // in meters
-  float temperature = baro.getTemperature();// in °C
+  // === Read data from BMP180 ===
+  //float pressurePa = bmp.readPressure();
+
+  long sum = 0;
+  for (int i = 0; i < 5; i++) {
+    sum += bmp.readPressure();
+    delay(20);
+  }
+  float pressurePa = sum / 5.0;
+  float pressure = pressurePa / 100.0;  // in hPa
+  float altitude = bmp.readAltitude(SEA_LEVEL_PRESSURE);      // in meters
+  float temperature = bmp.readTemperature();// in °C
 
   // === Data from MPU 6050 ===
   unsigned long currentTime = millis();
@@ -293,12 +299,16 @@ void loop() {
   
   // Simple integration for yaw (since we don't have magnetometer)
   yaw += gyroZ * dt;
+  // Normalize yaw to stay within -180 to +180 degrees
+  if (yaw > 180) yaw -= 360;
+  else if (yaw < -180) yaw += 360;
+
   
   // Check if device is stationary
   isStationary = checkStationary(calibratedAccelX, calibratedAccelY, calibratedAccelZ, 
                                 calibratedGyroX, calibratedGyroY, calibratedGyroZ);
   
-  // Convert angles to radians for calculations
+  // Convert angles to radians for c180.0;
   float rollRad = roll * PI / 180.0;
   float pitchRad = pitch * PI / 180.0;
   float yawRad = yaw * PI / 180.0;
@@ -366,7 +376,7 @@ void loop() {
   String message = "CAN-TI-" + String(timestamp) +
                    "; A-" + String(altitude, 2) +
                    "; T-" + String(temperature, 2) +
-                   "; P-" + String(pressure / 100.0, 2) + // convert hPa to bar
+                   "; P-" + String(pressure, 2) + 
                    "; X-" + String(posX)+
                    "; Y-" + String(posY)+
                    "; Z-" + String(posZ)+
