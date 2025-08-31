@@ -16,6 +16,7 @@
 // Create BMP085 object for BMP180 sensor, and global variables for BMP180
 Adafruit_BMP085 bmp;
 float initialAltitude = 0;
+float absinitialAltitude = 0;
 bool initialAltitudeSet = false;
 
 // MPU6050 object
@@ -270,10 +271,16 @@ float readingAltitude = bmp.readAltitude(SEA_LEVEL_PRESSURE); // in meters
 if (!initialAltitudeSet) {
     initialAltitude = readingAltitude; // store actual altitude as reference
     initialAltitudeSet = true;
+    
+  Serial.print("initialAltitude: ");
+
+  absinitialAltitude = abs(initialAltitude);
+
+  Serial.print(absinitialAltitude);
 }
 
 // Altitude relative to start (first reading = 0)
-float altitude = readingAltitude - initialAltitude;
+float altitude = readingAltitude - initialAltitude + absinitialAltitude;
 
 
 
