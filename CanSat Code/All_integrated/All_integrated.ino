@@ -186,8 +186,8 @@ bool checkStationary(float accelX, float accelY, float accelZ, float gyroX, floa
   return stationaryCount >= STATIONARY_SAMPLES;
 }
 
-// Set your local sea-level pressure in hPa
-#define SEA_LEVEL_PRESSURE 100810.0
+// Set your local sea-level pressure in Pa
+#define SEA_LEVEL_PRESSURE 100612.3
 
 void setup() {
   Serial.begin(115200);
